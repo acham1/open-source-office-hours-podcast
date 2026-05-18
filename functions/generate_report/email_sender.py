@@ -3,6 +3,7 @@ import os
 
 import resend
 
+from config import load_config
 from email_template import render_email
 
 logger = logging.getLogger(__name__)
@@ -14,11 +15,12 @@ def send_report_email(
     report: dict,
     report_id: str,
 ):
+    config = load_config()
     resend.api_key = os.environ["RESEND_API_KEY"]
-    from_email = os.environ.get("FROM_EMAIL", "deepdive@mail.dev-deep-dive.alanch.am")
-    site_url = os.environ.get("SITE_URL", "https://acham1.github.io/dev-deep-dive")
+    from_email = config["from_email"]
+    site_url = config["site_url"]
 
-    subject = f"Weekly Deep Dive: {report.get('title', project['name'])}"
+    subject = f"{config['name']}: {report.get('title', project['name'])}"
 
     for sub in subscribers:
         html = render_email(report, report_id, sub["unsubscribe_token"], site_url)

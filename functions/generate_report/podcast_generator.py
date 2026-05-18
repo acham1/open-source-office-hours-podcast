@@ -10,6 +10,7 @@ from google.genai import types
 from google.cloud import storage
 from pydub import AudioSegment
 
+from config import load_config
 from firestore_client import update_report_audio
 
 logger = logging.getLogger(__name__)
@@ -19,11 +20,36 @@ VOICE_STYLE_PROMPT = """Narrate in a relaxed, conversational public-radio style 
 Use a measured medium pace, clear diction, and natural phrasing. Avoid theatrical emotion, salesy enthusiasm, dramatic suspense, or overly polished "broadcast voice." The emotional delivery should feel curious, grounded, slightly wry, and confidently skeptical while remaining approachable and respectful."""
 
 VOICES = [
-    "Zephyr", "Puck", "Charon", "Kore", "Fenrir", "Leda", "Orus", "Aoede",
-    "Callirrhoe", "Autonoe", "Enceladus", "Iapetus", "Umbriel", "Algieba",
-    "Despina", "Erinome", "Algenib", "Rasalgethi", "Laomedeia", "Achernar",
-    "Alnilam", "Schedar", "Gacrux", "Pulcherrima", "Achird",
-    "Zubenelgenubi", "Vindemiatrix", "Sadachbia", "Sadaltager", "Sulafat",
+    "Zephyr",
+    "Puck",
+    "Charon",
+    "Kore",
+    "Fenrir",
+    "Leda",
+    "Orus",
+    "Aoede",
+    "Callirrhoe",
+    "Autonoe",
+    "Enceladus",
+    "Iapetus",
+    "Umbriel",
+    "Algieba",
+    "Despina",
+    "Erinome",
+    "Algenib",
+    "Rasalgethi",
+    "Laomedeia",
+    "Achernar",
+    "Alnilam",
+    "Schedar",
+    "Gacrux",
+    "Pulcherrima",
+    "Achird",
+    "Zubenelgenubi",
+    "Vindemiatrix",
+    "Sadachbia",
+    "Sadaltager",
+    "Sulafat",
 ]
 TTS_MODEL = "gemini-3.1-flash-tts-preview"
 
@@ -36,13 +62,14 @@ def _split_paragraphs(text: str, transition: str = "") -> list[str]:
     return paragraphs
 
 
-def build_podcast_script(report: dict) -> list[str]:
+def build_podcast_script(report: dict, config: dict) -> list[str]:
     title = report.get("title", "Untitled")
     tagline = report.get("tagline", "")
+    name = config["name"]
 
     chunks = []
 
-    chunks.append(f"Welcome to Weekly Deep Dive. This week: {title}. {tagline}")
+    chunks.append(f"Welcome to {name}. This week: {title}. {tagline}")
 
     body_sections = [
         ("why_it_matters", "Let's start with why this matters."),
@@ -58,7 +85,7 @@ def build_podcast_script(report: dict) -> list[str]:
             chunks.extend(_split_paragraphs(text, transition))
 
     chunks.append(
-        f"That's this week's deep dive into {title}. "
+        f"That's this week's {name} on {title}. "
         "Thanks for listening, and we'll see you next week."
     )
 
@@ -76,11 +103,11 @@ def _pcm_to_audio_segment(pcm_data: bytes) -> AudioSegment:
     return AudioSegment.from_wav(buf)
 
 
-def synthesize_audio(sections: list[str], report_id: str) -> dict:
+def synthesize_audio(sections: list[str], report_id: str, config: dict) -> dict:
     client = genai.Client(
         vertexai=True,
-        project=os.environ.get("GCP_PROJECT", "dev-deep-dive"),
-        location=os.environ.get("FUNCTION_REGION", "us-central1"),
+        project=config["gcp_project"],
+        location=config["gcp_region"],
     )
 
     voice_name = random.choice(VOICES)
@@ -93,7 +120,9 @@ def synthesize_audio(sections: list[str], report_id: str) -> dict:
 
     for i, section in enumerate(sections):
         total_chars += len(section)
-        logger.info("Synthesizing section %d/%d (%d chars)", i + 1, len(sections), len(section))
+        logger.info(
+            "Synthesizing section %d/%d (%d chars)", i + 1, len(sections), len(section)
+        )
 
         response = client.models.generate_content(
             model=TTS_MODEL,
@@ -112,7 +141,9 @@ def synthesize_audio(sections: list[str], report_id: str) -> dict:
 
         if not response.candidates or not response.candidates[0].content.parts:
             logger.warning("Empty TTS response for section %d, skipping", i + 1)
-            skipped.append({"index": i + 1, "chars": len(section), "preview": section[:100]})
+            skipped.append(
+                {"index": i + 1, "chars": len(section), "preview": section[:100]}
+            )
             continue
         pcm_data = response.candidates[0].content.parts[0].inline_data.data
         segment = _pcm_to_audio_segment(pcm_data)
@@ -121,13 +152,17 @@ def synthesize_audio(sections: list[str], report_id: str) -> dict:
             combined += pause
         combined += segment
 
-    logger.info("TTS synthesized %d chars, total duration %.1fs", total_chars, len(combined) / 1000)
+    logger.info(
+        "TTS synthesized %d chars, total duration %.1fs",
+        total_chars,
+        len(combined) / 1000,
+    )
 
     mp3_buf = io.BytesIO()
     combined.export(mp3_buf, format="mp3", bitrate="128k")
     mp3_bytes = mp3_buf.getvalue()
 
-    bucket_name = os.environ.get("PODCAST_BUCKET", "dev-deep-dive-podcast")
+    bucket_name = config["podcast_bucket"]
     gcs_client = storage.Client()
     bucket = gcs_client.bucket(bucket_name)
     blob = bucket.blob(f"episodes/{report_id}.mp3")
@@ -149,7 +184,9 @@ def synthesize_audio(sections: list[str], report_id: str) -> dict:
     }
 
 
-def _send_skipped_warning(report_id: str, title: str, skipped: list[dict]):
+def _send_skipped_warning(
+    report_id: str, title: str, skipped: list[dict], config: dict
+):
     admin_email = os.environ.get("ADMIN_EMAIL")
     resend_key = os.environ.get("RESEND_API_KEY")
     if not admin_email or not resend_key:
@@ -158,7 +195,7 @@ def _send_skipped_warning(report_id: str, title: str, skipped: list[dict]):
     import resend
 
     resend.api_key = resend_key
-    from_email = os.environ.get("FROM_EMAIL", "deepdive@mail.dev-deep-dive.alanch.am")
+    from_email = config["from_email"]
 
     items = "".join(
         f"<li>Section {s['index']} ({s['chars']} chars): "
@@ -166,16 +203,18 @@ def _send_skipped_warning(report_id: str, title: str, skipped: list[dict]):
         for s in skipped
     )
     try:
-        resend.Emails.send({
-            "from": from_email,
-            "to": admin_email,
-            "subject": f"Podcast warning: {len(skipped)} skipped section(s) in {title}",
-            "html": (
-                f"<p>Report <b>{title}</b> (<code>{report_id}</code>) had "
-                f"{len(skipped)} section(s) skipped due to empty TTS responses:</p>"
-                f"<ul>{items}</ul>"
-            ),
-        })
+        resend.Emails.send(
+            {
+                "from": from_email,
+                "to": admin_email,
+                "subject": f"Podcast warning: {len(skipped)} skipped section(s) in {title}",
+                "html": (
+                    f"<p>Report <b>{title}</b> (<code>{report_id}</code>) had "
+                    f"{len(skipped)} section(s) skipped due to empty TTS responses:</p>"
+                    f"<ul>{items}</ul>"
+                ),
+            }
+        )
     except Exception:
         logger.exception("Failed to send skipped-section warning email")
 
@@ -185,20 +224,24 @@ def generate_podcast_audio(report: dict, report_id: str) -> dict | None:
         logger.warning("Audio already exists for report %s, skipping", report_id)
         return None
 
-    sections = build_podcast_script(report)
-    result = synthesize_audio(sections, report_id)
+    config = load_config()
+    sections = build_podcast_script(report, config)
+    result = synthesize_audio(sections, report_id, config)
 
-    update_report_audio(report_id, {
-        "audio_url": result["audio_url"],
-        "audio_duration_secs": result["duration_secs"],
-        "audio_size_bytes": result["size_bytes"],
-        "audio_voice_name": result["voice_name"],
-        "audio_model": result["model"],
-        "audio_generated_at": datetime.now(timezone.utc),
-    })
+    update_report_audio(
+        report_id,
+        {
+            "audio_url": result["audio_url"],
+            "audio_duration_secs": result["duration_secs"],
+            "audio_size_bytes": result["size_bytes"],
+            "audio_voice_name": result["voice_name"],
+            "audio_model": result["model"],
+            "audio_generated_at": datetime.now(timezone.utc),
+        },
+    )
 
     if result["skipped_sections"]:
         title = report.get("title", "Untitled")
-        _send_skipped_warning(report_id, title, result["skipped_sections"])
+        _send_skipped_warning(report_id, title, result["skipped_sections"], config)
 
     return result

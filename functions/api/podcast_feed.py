@@ -2,43 +2,39 @@ import os
 from datetime import datetime, timezone
 from xml.etree.ElementTree import Element, SubElement, tostring
 
+from config import load_config
+
 ITUNES_NS = "http://www.itunes.com/dtds/podcast-1.0.dtd"
 
 
 def build_podcast_rss_xml(reports: list[dict]) -> str:
-    site_url = os.environ.get("SITE_URL", "https://acham1.github.io/dev-deep-dive")
+    config = load_config()
+    site_url = config["site_url"]
 
     rss = Element("rss", version="2.0")
     rss.set("xmlns:itunes", ITUNES_NS)
 
     channel = SubElement(rss, "channel")
-    SubElement(channel, "title").text = "Weekly Deep Dive"
+    SubElement(channel, "title").text = config["name"]
     SubElement(channel, "link").text = site_url
     SubElement(channel, "language").text = "en-us"
-    SubElement(channel, "description").text = (
-        "A weekly deep dive into notable open-source projects, "
-        "explained at three levels of difficulty by an AI researcher."
-    )
+    SubElement(channel, "description").text = config["podcast_description"]
 
-    SubElement(channel, f"{{{ITUNES_NS}}}author").text = "Weekly Deep Dive"
-    SubElement(channel, f"{{{ITUNES_NS}}}summary").text = (
-        "Each week, an AI agent researches a notable open-source project and "
-        "produces a structured technical report at beginner, intermediate, and "
-        "advanced levels. This podcast is the audio version of that report."
-    )
+    SubElement(channel, f"{{{ITUNES_NS}}}author").text = config["name"]
+    SubElement(channel, f"{{{ITUNES_NS}}}summary").text = config["podcast_description"]
     SubElement(channel, f"{{{ITUNES_NS}}}explicit").text = "no"
 
     image = SubElement(channel, f"{{{ITUNES_NS}}}image")
-    image.set("href", "https://storage.googleapis.com/dev-deep-dive-podcast/cover.png")
+    image.set("href", config["podcast_cover_url"])
 
     owner = SubElement(channel, f"{{{ITUNES_NS}}}owner")
-    SubElement(owner, f"{{{ITUNES_NS}}}name").text = "Weekly Deep Dive"
+    SubElement(owner, f"{{{ITUNES_NS}}}name").text = config["name"]
     SubElement(owner, f"{{{ITUNES_NS}}}email").text = os.environ.get(
-        "ADMIN_EMAIL", "deepdive@mail.dev-deep-dive.alanch.am"
+        "ADMIN_EMAIL", config["from_email"]
     )
 
     category = SubElement(channel, f"{{{ITUNES_NS}}}category")
-    category.set("text", "Technology")
+    category.set("text", config["podcast_category"])
 
     for report in reports:
         audio_url = report.get("audio_url")
@@ -48,7 +44,7 @@ def build_podcast_rss_xml(reports: list[dict]) -> str:
         item = SubElement(channel, "item")
         title = report.get("title", report.get("project_name", "Untitled"))
         SubElement(item, "title").text = title
-        SubElement(item, f"{{{ITUNES_NS}}}author").text = "Weekly Deep Dive"
+        SubElement(item, f"{{{ITUNES_NS}}}author").text = config["name"]
         SubElement(item, f"{{{ITUNES_NS}}}explicit").text = "no"
 
         report_id = report.get("id", "")
@@ -58,9 +54,7 @@ def build_podcast_rss_xml(reports: list[dict]) -> str:
 
         tagline = report.get("tagline", "")
         why = report.get("why_it_matters", "")
-        SubElement(item, "description").text = (
-            f"{tagline}\n\n{why}" if tagline else why
-        )
+        SubElement(item, "description").text = f"{tagline}\n\n{why}" if tagline else why
 
         enclosure = SubElement(item, "enclosure")
         enclosure.set("url", audio_url)
@@ -75,9 +69,7 @@ def build_podcast_rss_xml(reports: list[dict]) -> str:
                 f"{hours}:{minutes:02d}:{secs:02d}"
             )
         else:
-            SubElement(item, f"{{{ITUNES_NS}}}duration").text = (
-                f"{minutes}:{secs:02d}"
-            )
+            SubElement(item, f"{{{ITUNES_NS}}}duration").text = f"{minutes}:{secs:02d}"
 
         created = report.get("created_at")
         if created:

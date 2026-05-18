@@ -1,0 +1,27 @@
+# Branding
+name: "Weekly Deep Dive"
+tagline: "One open-source project. Three levels of difficulty. Every week."
+description: >-
+  A weekly deep dive into notable open-source projects,
+  explained at three levels of difficulty.
+
+# GCP infrastructure
+gcp_project: dev-deep-dive
+gcp_region: us-central1
+secret_name: environment-variables
+topic: deep-dive-trigger
+schedule: "0 7 * * MON"
+timezone: America/Los_Angeles
+
+# URLs & email
+site_url: https://acham1.github.io/dev-deep-dive
+from_email: deepdive@mail.dev-deep-dive.alanch.am
+
+# Podcast
+podcast_bucket: dev-deep-dive-podcast
+podcast_cover_url: https://storage.googleapis.com/dev-deep-dive-podcast/cover.png
+podcast_category: Technology
+podcast_description: >-
+  Each week, an AI agent researches a notable open-source project and
+  produces a structured technical report at beginner, intermediate, and
+  advanced levels. This podcast is the audio version of that report.

@@ -4,16 +4,18 @@ import urllib.request
 
 import anthropic
 
+from config import load_config
 from firestore_client import get_covered_projects
 from prompts import build_selection_prompt
 
 
 def select_project() -> dict:
+    config = load_config()
     covered = get_covered_projects()
     covered_names = [p["name"] for p in covered]
     recent = covered[-5:] if covered else []
 
-    prompt = build_selection_prompt(covered_names, recent)
+    prompt = build_selection_prompt(covered_names, recent, config)
 
     client = anthropic.Anthropic()
     response = client.messages.create(

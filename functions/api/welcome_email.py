@@ -3,6 +3,7 @@ import os
 
 import resend
 
+from config import load_config
 from firestore_client import get_latest_report
 
 logger = logging.getLogger(__name__)
@@ -14,13 +15,15 @@ def send_welcome_email(email: str):
         logger.warning("RESEND_API_KEY not set, skipping welcome email")
         return
 
+    config = load_config()
     resend.api_key = api_key
-    from_email = os.environ.get("FROM_EMAIL", "deepdive@mail.dev-deep-dive.alanch.am")
-    site_url = os.environ.get("SITE_URL", "https://acham1.github.io/dev-deep-dive")
+    from_email = config["from_email"]
+    site_url = config["site_url"]
+    name = config["name"]
 
     report = get_latest_report()
 
-    body = f"""<h2>Welcome to Weekly Deep Dive!</h2>
+    body = f"""<h2>Welcome to {name}!</h2>
 <p>You'll receive a deep dive into a notable open-source project every week,
 explained at three levels of difficulty.</p>"""
 
@@ -38,7 +41,7 @@ explained at three levels of difficulty.</p>"""
             {
                 "from": from_email,
                 "to": email,
-                "subject": "Welcome to Weekly Deep Dive!",
+                "subject": f"Welcome to {name}!",
                 "html": body,
             }
         )

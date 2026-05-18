@@ -3,21 +3,21 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Weekly Deep Dive</title>
+  <title>{{NAME}}</title>
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="alternate" type="application/rss+xml" title="Weekly Deep Dive" href="https://us-central1-dev-deep-dive.cloudfunctions.net/api/feed.xml">
+  <link rel="alternate" type="application/rss+xml" title="{{NAME}}" href="{{API_URL}}/feed.xml">
 </head>
 <body>
 
 <header class="site-header">
   <div class="container">
-    <h1><a href="./"><img src="logo-icon.png" alt="" class="header-logo">Weekly Deep Dive</a></h1>
+    <h1><a href="./"><img src="logo-icon.png" alt="" class="header-logo">{{NAME}}</a></h1>
     <nav>
       <a href="archive.html">Archive</a>
-      <a href="https://us-central1-dev-deep-dive.cloudfunctions.net/api/podcast.xml">Podcast</a>
-      <a href="https://us-central1-dev-deep-dive.cloudfunctions.net/api/feed.xml">RSS</a>
+      <a href="{{API_URL}}/podcast.xml">Podcast</a>
+      <a href="{{API_URL}}/feed.xml">RSS</a>
     </nav>
   </div>
 </header>
@@ -32,13 +32,13 @@
 
 <footer class="site-footer">
   <div class="container">
-    <a href="./">Home</a> · <a href="archive.html">Archive</a> · <a href="https://us-central1-dev-deep-dive.cloudfunctions.net/api/podcast.xml">Podcast</a> · <a href="https://us-central1-dev-deep-dive.cloudfunctions.net/api/feed.xml">RSS Feed</a>
+    <a href="./">Home</a> · <a href="archive.html">Archive</a> · <a href="{{API_URL}}/podcast.xml">Podcast</a> · <a href="{{API_URL}}/feed.xml">RSS Feed</a>
   </div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-  window.DEEP_DIVE_API_BASE = "https://us-central1-dev-deep-dive.cloudfunctions.net/api";
+  window.DEEP_DIVE_API_BASE = "{{API_URL}}";
 </script>
 <script src="app.js"></script>
 

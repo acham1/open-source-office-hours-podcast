@@ -1,19 +1,18 @@
-import os
 from datetime import datetime, timezone
 from xml.etree.ElementTree import Element, SubElement, tostring
 
+from config import load_config
+
 
 def build_rss_xml(reports: list[dict]) -> str:
-    site_url = os.environ.get("SITE_URL", "https://acham1.github.io/dev-deep-dive")
+    config = load_config()
+    site_url = config["site_url"]
 
     rss = Element("rss", version="2.0")
     channel = SubElement(rss, "channel")
-    SubElement(channel, "title").text = "Weekly Deep Dive"
+    SubElement(channel, "title").text = config["name"]
     SubElement(channel, "link").text = site_url
-    SubElement(channel, "description").text = (
-        "A weekly deep dive into notable open-source projects, "
-        "explained at three levels of difficulty."
-    )
+    SubElement(channel, "description").text = config["description"]
     SubElement(channel, "language").text = "en-us"
 
     for report in reports:
@@ -28,9 +27,7 @@ def build_rss_xml(reports: list[dict]) -> str:
 
         tagline = report.get("tagline", "")
         why = report.get("why_it_matters", "")
-        SubElement(item, "description").text = (
-            f"{tagline}\n\n{why}" if tagline else why
-        )
+        SubElement(item, "description").text = f"{tagline}\n\n{why}" if tagline else why
 
         created = report.get("created_at")
         if created:

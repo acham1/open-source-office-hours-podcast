@@ -123,7 +123,7 @@ async function loadReport() {
       ? new Date(r.created_at).toLocaleDateString()
       : "";
 
-    document.title = `${r.title || r.project_name} — Weekly Deep Dive`;
+    document.title = `${r.title || r.project_name} — {{NAME}}`;
 
     reportContainer.innerHTML = `
       <div class="report-header">

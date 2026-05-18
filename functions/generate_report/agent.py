@@ -7,6 +7,7 @@ from claude_agent_sdk import (
     query,
 )
 
+from config import load_config
 from prompts import build_system_prompt
 
 
@@ -15,7 +16,8 @@ def run_agent(project: dict) -> dict:
 
 
 async def _run_agent(project: dict) -> dict:
-    system_prompt = build_system_prompt(project)
+    config = load_config()
+    system_prompt = build_system_prompt(project, config)
 
     options = ClaudeAgentOptions(
         system_prompt=system_prompt,
@@ -29,7 +31,7 @@ async def _run_agent(project: dict) -> dict:
     full_text = ""
     async for message in query(
         prompt=(
-            f"Research and write a Weekly Deep Dive report on: "
+            f"Research and write a {config['name']} report on: "
             f"{project['name']} ({project['repo_url']})"
         ),
         options=options,

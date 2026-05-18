@@ -1,4 +1,4 @@
-SELECTION_PROMPT_TEMPLATE = """You are selecting a project for a weekly newsletter called "Weekly Deep Dive" \
+SELECTION_PROMPT_TEMPLATE = """You are selecting a project for a weekly newsletter called "{name}" \
 that explores notable open-source projects.
 
 Pick ONE open-source project that would make a compelling deep dive. The project \
@@ -27,7 +27,9 @@ Respond with ONLY a JSON object, no other text:
 """
 
 
-def build_selection_prompt(covered_names: list[str], recent: list[dict]) -> str:
+def build_selection_prompt(
+    covered_names: list[str], recent: list[dict], config: dict
+) -> str:
     if covered_names:
         covered_section = "ALREADY COVERED (do NOT pick any of these):\n" + ", ".join(
             covered_names
@@ -47,14 +49,16 @@ def build_selection_prompt(covered_names: list[str], recent: list[dict]) -> str:
         recent_section = "No recent picks yet — pick anything you find compelling."
 
     return SELECTION_PROMPT_TEMPLATE.format(
+        name=config["name"],
         covered_section=covered_section,
         recent_section=recent_section,
     )
 
 
-def build_system_prompt(project: dict) -> str:
+def build_system_prompt(project: dict, config: dict) -> str:
+    name = config["name"]
     return f"""You are a technical writer and software architecture analyst producing \
-a "Weekly Deep Dive" report for a developer newsletter.
+a "{name}" report for a developer newsletter.
 
 YOUR TASK: Research the open-source project "{project['name']}" and produce a \
 structured technical report.

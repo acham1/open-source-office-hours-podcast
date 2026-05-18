@@ -1,7 +1,10 @@
 import markdown as md
 
+from config import load_config
+
 
 def render_email(report: dict, report_id: str, unsub_token: str, site_url: str) -> str:
+    config = load_config()
     why_html = md.markdown(report.get("why_it_matters", ""))
     beginner_html = md.markdown(report.get("beginner", ""))
     intermediate_html = md.markdown(report.get("intermediate", ""))
@@ -25,7 +28,7 @@ def render_email(report: dict, report_id: str, unsub_token: str, site_url: str) 
 
 <!-- Header -->
 <tr><td style="background:#1a1a2e;padding:24px 32px;">
-<h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:normal;">Weekly Deep Dive</h1>
+<h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:normal;">{config["name"]}</h1>
 </td></tr>
 
 <!-- Title + Tagline -->

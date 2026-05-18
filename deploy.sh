@@ -1,12 +1,19 @@
 #!/bin/bash
 set -euo pipefail
 
-PROJECT_ID="${GCP_PROJECT:-dev-deep-dive}"
-REGION="${GCP_REGION:-us-central1}"
-TOPIC="deep-dive-trigger"
-SECRET_NAME="environment-variables"
+# Read config from config.yaml
+PROJECT_ID=$(python3 -c "import yaml; print(yaml.safe_load(open('config.yaml'))['gcp_project'])")
+REGION=$(python3 -c "import yaml; print(yaml.safe_load(open('config.yaml'))['gcp_region'])")
+SECRET_NAME=$(python3 -c "import yaml; print(yaml.safe_load(open('config.yaml'))['secret_name'])")
+TOPIC=$(python3 -c "import yaml; print(yaml.safe_load(open('config.yaml'))['topic'])")
+SCHEDULE=$(python3 -c "import yaml; print(yaml.safe_load(open('config.yaml'))['schedule'])")
+TIMEZONE=$(python3 -c "import yaml; print(yaml.safe_load(open('config.yaml'))['timezone'])")
 
 echo "Deploying to project: $PROJECT_ID, region: $REGION"
+
+# Copy config.yaml into each function's source directory
+cp config.yaml functions/generate_report/config.yaml
+cp config.yaml functions/api/config.yaml
 
 # Create Pub/Sub topic (idempotent)
 gcloud pubsub topics create "$TOPIC" --project="$PROJECT_ID" 2>/dev/null || true
@@ -22,7 +29,6 @@ gcloud functions deploy generate-report \
     --trigger-topic="$TOPIC" \
     --timeout=540s \
     --memory=1Gi \
-    --set-env-vars="GCP_PROJECT=$PROJECT_ID,SITE_URL=${SITE_URL:-https://acham1.github.io/dev-deep-dive},PODCAST_BUCKET=${PODCAST_BUCKET:-dev-deep-dive-podcast}" \
     --set-secrets="/etc/secrets/.env=$SECRET_NAME:latest" \
     --project="$PROJECT_ID"
 
@@ -38,9 +44,11 @@ gcloud functions deploy api \
     --allow-unauthenticated \
     --timeout=60s \
     --memory=256Mi \
-    --set-env-vars="GCP_PROJECT=$PROJECT_ID,SITE_URL=${SITE_URL:-https://acham1.github.io/dev-deep-dive}" \
     --set-secrets="/etc/secrets/.env=$SECRET_NAME:latest" \
     --project="$PROJECT_ID"
+
+# Clean up copied config files
+rm -f functions/generate_report/config.yaml functions/api/config.yaml
 
 # Create/update Cloud Scheduler job
 echo "Configuring Cloud Scheduler..."
@@ -48,8 +56,8 @@ gcloud scheduler jobs delete deep-dive-weekly \
     --location="$REGION" --project="$PROJECT_ID" --quiet 2>/dev/null || true
 gcloud scheduler jobs create pubsub deep-dive-weekly \
     --location="$REGION" \
-    --schedule="${SCHEDULE:-0 7 * * MON}" \
-    --time-zone="${TIMEZONE:-America/Los_Angeles}" \
+    --schedule="$SCHEDULE" \
+    --time-zone="$TIMEZONE" \
     --topic="$TOPIC" \
     --message-body='{}' \
     --project="$PROJECT_ID"
@@ -58,5 +66,3 @@ API_URL="https://$REGION-$PROJECT_ID.cloudfunctions.net/api"
 echo ""
 echo "Deployment complete!"
 echo "API: $API_URL"
-echo ""
-echo "IMPORTANT: Update DEEP_DIVE_API_BASE in the frontend HTML files to: $API_URL"

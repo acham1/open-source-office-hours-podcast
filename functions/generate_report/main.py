@@ -14,6 +14,7 @@ if _secrets_path.exists():
             os.environ.setdefault(key.strip(), value.strip())
 
 from agent import run_agent
+from config import load_config
 from email_sender import send_report_email
 from firestore_client import (
     get_subscribers,
@@ -37,13 +38,13 @@ def _send_error_alert(error: Exception):
     import resend
 
     resend.api_key = resend_key
-    from_email = os.environ.get("FROM_EMAIL", "deepdive@mail.dev-deep-dive.alanch.am")
+    config = load_config()
     try:
         resend.Emails.send(
             {
-                "from": from_email,
+                "from": config["from_email"],
                 "to": admin_email,
-                "subject": "Weekly Deep Dive: report generation failed",
+                "subject": f"{config['name']}: report generation failed",
                 "html": f"<pre>{error.__class__.__name__}: {error}</pre>",
             }
         )
