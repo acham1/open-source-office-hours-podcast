@@ -3,6 +3,7 @@ import logging
 import os
 import random
 import wave
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 
 from google import genai
@@ -113,41 +114,63 @@ def synthesize_audio(sections: list[str], report_id: str, config: dict) -> dict:
     voice_name = random.choice(VOICES)
     logger.info("Selected voice: %s", voice_name)
 
-    combined = AudioSegment.empty()
-    pause = AudioSegment.silent(duration=1000)
-    total_chars = 0
-    skipped = []
+    total_chars = sum(len(s) for s in sections)
+    logger.info(
+        "Synthesizing %d sections (%d chars) in parallel", len(sections), total_chars
+    )
 
-    for i, section in enumerate(sections):
-        total_chars += len(section)
+    tts_config = types.GenerateContentConfig(
+        response_modalities=["AUDIO"],
+        speech_config=types.SpeechConfig(
+            voice_config=types.VoiceConfig(
+                prebuilt_voice_config=types.PrebuiltVoiceConfig(
+                    voice_name=voice_name,
+                )
+            )
+        ),
+    )
+
+    def _synthesize_one(i, section):
         logger.info(
             "Synthesizing section %d/%d (%d chars)", i + 1, len(sections), len(section)
         )
-
         response = client.models.generate_content(
             model=TTS_MODEL,
             contents=f"{VOICE_STYLE_PROMPT}\n\n{section}",
-            config=types.GenerateContentConfig(
-                response_modalities=["AUDIO"],
-                speech_config=types.SpeechConfig(
-                    voice_config=types.VoiceConfig(
-                        prebuilt_voice_config=types.PrebuiltVoiceConfig(
-                            voice_name=voice_name,
-                        )
-                    )
-                ),
-            ),
+            config=tts_config,
         )
-
         if not response.candidates or not response.candidates[0].content.parts:
             logger.warning("Empty TTS response for section %d, skipping", i + 1)
-            skipped.append(
-                {"index": i + 1, "chars": len(section), "preview": section[:100]}
-            )
-            continue
+            return i, None
         pcm_data = response.candidates[0].content.parts[0].inline_data.data
-        segment = _pcm_to_audio_segment(pcm_data)
+        return i, _pcm_to_audio_segment(pcm_data)
 
+    results = [None] * len(sections)
+    skipped = []
+
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        futures = {
+            pool.submit(_synthesize_one, i, s): i for i, s in enumerate(sections)
+        }
+        for future in as_completed(futures):
+            i = futures[future]
+            idx, segment = future.result()
+            if segment is None:
+                skipped.append(
+                    {
+                        "index": i + 1,
+                        "chars": len(sections[i]),
+                        "preview": sections[i][:100],
+                    }
+                )
+            else:
+                results[i] = segment
+
+    combined = AudioSegment.empty()
+    pause = AudioSegment.silent(duration=1000)
+    for segment in results:
+        if segment is None:
+            continue
         if len(combined) > 0:
             combined += pause
         combined += segment

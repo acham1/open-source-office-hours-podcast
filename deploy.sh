@@ -33,6 +33,14 @@ gcloud functions deploy generate-report \
     --set-secrets="/etc/secrets/.env=$SECRET_NAME:latest" \
     --project="$PROJECT_ID"
 
+# Cloud Functions caps event-triggered timeout at 540s, but Cloud Run allows 3600s
+echo "Extending Cloud Run timeout to 3600s..."
+gcloud run services update generate-report \
+    --timeout=3600 \
+    --region="$REGION" \
+    --project="$PROJECT_ID" \
+    --quiet
+
 # Deploy API function
 echo "Deploying api function..."
 gcloud functions deploy api \
