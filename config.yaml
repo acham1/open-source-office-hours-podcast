@@ -1,5 +1,5 @@
 # Branding
-name: "Weekly Deep Dive"
+name: "Open Source Office Hours"
 tagline: "One open-source project. Three levels of difficulty. Every week."
 description: >-
   A weekly deep dive into notable open-source projects,
@@ -14,8 +14,8 @@ schedule: "0 7 * * MON"
 timezone: America/Los_Angeles
 
 # URLs & email
-site_url: https://acham1.github.io/dev-deep-dive
-from_email: deepdive@mail.dev-deep-dive.alanch.am
+site_url: https://open-source-office-hours-podcast.alanch.am
+from_email: no-reply@mail.open-source-office-hours-podcast.alanch.am
 
 # Podcast
 podcast_bucket: dev-deep-dive-podcast
