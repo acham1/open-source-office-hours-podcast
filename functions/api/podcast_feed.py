@@ -28,6 +28,15 @@ def build_podcast_rss_xml(reports: list[dict]) -> str:
     )
     SubElement(channel, f"{{{ITUNES_NS}}}explicit").text = "no"
 
+    image = SubElement(channel, f"{{{ITUNES_NS}}}image")
+    image.set("href", "https://storage.googleapis.com/dev-deep-dive-podcast/cover.png")
+
+    owner = SubElement(channel, f"{{{ITUNES_NS}}}owner")
+    SubElement(owner, f"{{{ITUNES_NS}}}name").text = "Weekly Deep Dive"
+    SubElement(owner, f"{{{ITUNES_NS}}}email").text = os.environ.get(
+        "ADMIN_EMAIL", "deepdive@mail.dev-deep-dive.alanch.am"
+    )
+
     category = SubElement(channel, f"{{{ITUNES_NS}}}category")
     category.set("text", "Technology")
 
