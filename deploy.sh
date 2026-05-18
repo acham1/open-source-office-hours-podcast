@@ -8,6 +8,7 @@ SECRET_NAME=$(python3 -c "import yaml; print(yaml.safe_load(open('config.yaml'))
 TOPIC=$(python3 -c "import yaml; print(yaml.safe_load(open('config.yaml'))['topic'])")
 SCHEDULE=$(python3 -c "import yaml; print(yaml.safe_load(open('config.yaml'))['schedule'])")
 TIMEZONE=$(python3 -c "import yaml; print(yaml.safe_load(open('config.yaml'))['timezone'])")
+JOB_NAME=$(python3 -c "import yaml; print(yaml.safe_load(open('config.yaml'))['scheduler_job'])")
 
 echo "Deploying to project: $PROJECT_ID, region: $REGION"
 
@@ -52,13 +53,13 @@ rm -f functions/generate_report/config.yaml functions/api/config.yaml
 
 # Create/update Cloud Scheduler job
 echo "Configuring Cloud Scheduler..."
-gcloud scheduler jobs delete deep-dive-weekly \
+gcloud scheduler jobs delete "$JOB_NAME" \
     --location="$REGION" --project="$PROJECT_ID" --quiet 2>/dev/null || true
-gcloud scheduler jobs create pubsub deep-dive-weekly \
+gcloud scheduler jobs create pubsub "$JOB_NAME" \
     --location="$REGION" \
     --schedule="$SCHEDULE" \
     --time-zone="$TIMEZONE" \
-    --topic="$TOPIC" \
+    --topic="projects/$PROJECT_ID/topics/$TOPIC" \
     --message-body='{}' \
     --project="$PROJECT_ID"
 

@@ -6,10 +6,11 @@ description: >-
   explained at three levels of difficulty.
 
 # GCP infrastructure
-gcp_project: dev-deep-dive
+gcp_project: open-source-office-hours-pod
 gcp_region: us-central1
 secret_name: environment-variables
-topic: deep-dive-trigger
+topic: open-source-office-hours-podcast-trigger
+scheduler_job: open-source-office-hours-podcast-weekly
 schedule: "0 7 * * MON"
 timezone: America/Los_Angeles
 
@@ -18,8 +19,8 @@ site_url: https://open-source-office-hours-podcast.alanch.am
 from_email: no-reply@mail.open-source-office-hours-podcast.alanch.am
 
 # Podcast
-podcast_bucket: dev-deep-dive-podcast
-podcast_cover_url: https://storage.googleapis.com/dev-deep-dive-podcast/cover.png
+podcast_bucket: open-source-office-hours-podcast
+podcast_cover_url: https://storage.googleapis.com/open-source-office-hours-podcast/cover.png
 podcast_category: Technology
 podcast_description: >-
   Each week, an AI agent researches a notable open-source project and
