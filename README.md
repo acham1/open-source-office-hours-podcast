@@ -82,4 +82,5 @@ gcloud pubsub topics publish open-source-office-hours-podcast-trigger \
 - [x] Error alerting — Email admin when report generation fails
 - [x] Welcome email with most recent report
 - [ ] Multi-domain support — Make topic selection and report prompts configurable templates for other domains
+- [ ] Topic queue — Firestore-backed queue for manually requested episodes that get picked up before random selection
 - [ ] Monetization — Explore podcast monetization (sponsorships, premium episodes, etc.)
