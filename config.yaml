@@ -16,7 +16,7 @@ timezone: America/Los_Angeles
 
 # URLs & email
 site_url: https://open-source-office-hours-podcast.alanch.am
-from_email: no-reply@mail.open-source-office-hours-podcast.alanch.am
+from_email: no-reply@mail.alanch.am
 
 # Podcast
 podcast_bucket: open-source-office-hours-podcast
