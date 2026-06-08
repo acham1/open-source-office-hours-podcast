@@ -21,12 +21,10 @@ from config import load_config
 from firestore_client import (
     add_subscriber,
     confirm_subscriber,
-    get_latest_report,
     get_report,
     list_reports,
     remove_subscriber,
 )
-from welcome_email import send_welcome_email
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
