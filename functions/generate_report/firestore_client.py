@@ -54,7 +54,13 @@ def save_report(project: dict, report: dict) -> str:
 
 
 def get_subscribers() -> list[dict]:
-    docs = _db().collection("subscribers").where("active", "==", True).stream()
+    docs = (
+        _db()
+        .collection("subscribers")
+        .where("active", "==", True)
+        .where("confirmed", "==", True)
+        .stream()
+    )
     return [doc.to_dict() for doc in docs]
 
 

@@ -22,8 +22,15 @@ def send_report_email(
 
     subject = f"{config['name']}: {report.get('title', project['name'])}"
 
+    api_url = (
+        f"https://{config['gcp_region']}-{config['gcp_project']}"
+        f".cloudfunctions.net/api"
+    )
+
     for sub in subscribers:
         html = render_email(report, report_id, sub["unsubscribe_token"], site_url)
+        unsub_url = f"{site_url}/unsubscribe.html?token={sub['unsubscribe_token']}"
+        unsub_api = f"{api_url}/unsubscribe?token={sub['unsubscribe_token']}"
         try:
             resend.Emails.send(
                 {
@@ -31,6 +38,10 @@ def send_report_email(
                     "to": sub["email"],
                     "subject": subject,
                     "html": html,
+                    "headers": {
+                        "List-Unsubscribe": f"<{unsub_api}>",
+                        "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+                    },
                 }
             )
         except Exception:

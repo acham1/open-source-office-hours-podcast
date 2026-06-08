@@ -22,10 +22,11 @@ if (signupForm) {
       });
       const data = await res.json();
       if (res.ok) {
-        msg.textContent =
-          data.status === "already_subscribed"
-            ? "You're already subscribed!"
-            : "You're in! Watch your inbox.";
+        if (data.status === "already_subscribed") {
+          msg.textContent = "You're already subscribed!";
+        } else {
+          msg.textContent = "Check your email to confirm your subscription.";
+        }
         msg.className = "signup-message success";
         input.value = "";
       } else {
@@ -233,6 +234,37 @@ async function loadLatest() {
 
 if (latestPreview) {
   loadLatest();
+}
+
+// --- Confirm Subscription ---
+
+const confirmMessage = document.getElementById("confirm-result");
+
+async function handleConfirm() {
+  if (!confirmMessage) return;
+
+  const token = new URLSearchParams(location.search).get("token");
+  if (!token) {
+    confirmMessage.textContent = "Invalid confirmation link.";
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/confirm?token=${token}`);
+    if (res.ok) {
+      confirmMessage.textContent =
+        "You're confirmed! Welcome aboard — watch your inbox for the next deep dive.";
+    } else {
+      confirmMessage.textContent =
+        "Confirmation link not found or already used.";
+    }
+  } catch {
+    confirmMessage.textContent = "Something went wrong. Please try again.";
+  }
+}
+
+if (confirmMessage) {
+  handleConfirm();
 }
 
 // --- Unsubscribe ---
