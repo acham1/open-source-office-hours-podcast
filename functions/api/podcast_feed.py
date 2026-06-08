@@ -1,10 +1,11 @@
 import os
 from datetime import datetime, timezone
-from xml.etree.ElementTree import Element, SubElement, tostring
+from xml.etree.ElementTree import Element, SubElement, register_namespace, tostring
 
 from config import load_config
 
 ITUNES_NS = "http://www.itunes.com/dtds/podcast-1.0.dtd"
+register_namespace("itunes", ITUNES_NS)
 
 
 def build_podcast_rss_xml(reports: list[dict]) -> str:
@@ -12,7 +13,6 @@ def build_podcast_rss_xml(reports: list[dict]) -> str:
     site_url = config["site_url"]
 
     rss = Element("rss", version="2.0")
-    rss.set("xmlns:itunes", ITUNES_NS)
 
     channel = SubElement(rss, "channel")
     SubElement(channel, "title").text = config["name"]
