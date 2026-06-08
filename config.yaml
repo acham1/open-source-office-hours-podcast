@@ -21,6 +21,7 @@ from_email: no-reply@mail.alanch.am
 # Podcast
 podcast_bucket: open-source-office-hours-podcast
 podcast_cover_url: https://storage.googleapis.com/open-source-office-hours-podcast/cover.png
+podcast_url: https://open.spotify.com/show/033iFNVmkrY9hmhRLXjyfY
 podcast_category: Technology
 podcast_description: >-
   Each week, an AI agent researches a notable open-source project and
