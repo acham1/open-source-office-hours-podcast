@@ -2,8 +2,8 @@
 name: "Open Source Office Hours"
 tagline: "One open-source project. Three levels of difficulty. Every week."
 description: >-
-  A weekly deep dive into notable open-source projects,
-  explained at three levels of difficulty.
+  Hosted by Alan Cham. A weekly deep dive into notable open-source
+  projects, explained at three levels of difficulty.
 
 # GCP infrastructure
 gcp_project: open-source-office-hours-pod
@@ -21,9 +21,17 @@ from_email: no-reply@mail.alanch.am
 # Podcast
 podcast_bucket: open-source-office-hours-podcast
 podcast_cover_url: https://storage.googleapis.com/open-source-office-hours-podcast/cover.png
+podcast_author: Alan Cham
 podcast_url: https://open.spotify.com/show/033iFNVmkrY9hmhRLXjyfY
 podcast_category: Technology
 podcast_description: >-
-  Each week, an AI agent researches a notable open-source project and
-  produces a structured technical report at beginner, intermediate, and
-  advanced levels. This podcast is the audio version of that report.
+  Hosted by Alan Cham. Each week, an AI agent researches a notable
+  open-source project and produces a structured technical report at
+  beginner, intermediate, and advanced levels. This podcast is the
+  audio version of that report.
+
+# Host
+host_name: Alan Cham
+host_linkedin: https://www.linkedin.com/in/acham1/
+host_github: https://github.com/acham1
+host_email: info@alanch.am
